@@ -67,5 +67,4 @@ CHIP ALU {
     Not(in = r, out = zr);
     //check if out nagtive
     Or(a = ngpin, b = false, out = ng);
-
 }
