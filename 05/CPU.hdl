@@ -40,4 +40,86 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+    Mux16(a = instruction, b = aluout, sel = instruction[15], out = i1);
+    Not(in = instruction[15], out = na);
+    And(a = instruction[15], b = instruction[5], out = aa);
+    Or(a = na, b = aa, out = writea);
+    //A
+    ARegister(in = i1, load = writea, out = areg, out[0..14] = addressM);
+    
+    Mux16(a = areg, b = inM, sel = instruction[12], out = i2);
+
+    ALU(x = dreg,
+        y = i2,
+
+        zx = instruction[11],
+        nx = instruction[10],
+        zy = instruction[9],
+        ny = instruction[8],
+        f = instruction[7],
+        no = instruction[6],
+
+        zr = zr,
+        ng = ng,
+        out = aluout,
+        out = outM);
+    //D
+    And(a = instruction[15], b = instruction[4], out = dload);
+    DRegister(in = aluout, load = dload, out = dreg);
+
+    And(a = instruction[15], b = instruction[3], out = writeM);
+    
+    //jump
+    Not(in = i[2], out = n2);
+    Not(in = i[1], out = n1);
+    Not(in = i[0], out = n0);
+    Not(in = zr, out = nzr);
+    Not(in = ng, out = nng);
+
+    //jgt
+    And(a = n2, b = n1, out = pgt);
+    And(a = pgt, b = i[0], out = jgt);
+    And(a = nzr, b = nng, out = p1);
+    And(a = jgt, b = p1, out = j0);
+
+    //jeq
+    And(a = n2, b = n0, out = peq);
+    And(a = peq, b = n1, out = jeq);
+    And(a = jeq, b = zr, out = j1);
+
+    //jge
+    And(a = i[1], b = i[0], out = pge);
+    And(a = pge, b = n2, out = jge);
+    And(a = jge, b = nng, out = j2);
+
+    //jlt
+    And(a = n1, b = n0, out = plt);
+    And(a = plt, b = i[2], out = jlt);
+    And(a = jlt, b = ng, out = j3);
+
+    //jne
+    And(a = i[2], b = i[0], out = pne);
+    And(a = pne, b = n1, out = jne);
+    And(a = jne, b = nzr, out = j4);
+
+    //jle
+    And(a = i[2], b = i[1], out = ple);
+    And(a = ple, b = n0, out = jle);
+    Or(a = ng, b = zr, out = p5);
+    And(a = jle, b = p5, out = j5);
+
+    //jmp
+    And(a = i[2], b = i[1], out = pmp);
+    And(a = pmp, b = i[0], out = j6);
+
+    //mix
+    Or(a = j0, b = j1, out = o1);
+    Or(a = j2, b = j3, out = o2);
+    Or(a = j4, b = j5, out = o3);
+    Or(a = j6, b = false, out = o4);
+    Or(a = o1, b = o2, out = o5);
+    Or(a = o3, b = o4, out = o6);
+    Or(a = o5, b = o6, out = jump);
+
+    PC(in = areg, load = jump, inc = true, reset = reset, out = pc);
 }
